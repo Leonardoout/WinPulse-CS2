@@ -1,0 +1,6 @@
+{
+  "name": "WinPulse CS2",
+  "description": "Utilitario de otimizacao para Windows 11 e Counter-Strike 2 com limpeza de temporarios, planos de energia, baixa latencia e gerador de scripts PowerShell/BAT e autoexec.cfg.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

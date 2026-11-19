@@ -1,0 +1,167 @@
+@import "tailwindcss";
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-sans: "Public Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  :root,
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --wp-bg: #0b0e14;
+    --wp-sidebar: rgba(12, 16, 24, 0.36);
+    --wp-header: rgba(12, 16, 24, 0.34);
+    --wp-surface: rgba(18, 22, 32, 0.34);
+    --wp-surface-alt: rgba(14, 18, 26, 0.26);
+    --wp-surface-hover: rgba(255, 255, 255, 0.08);
+    --wp-surface-active: rgba(255, 255, 255, 0.14);
+    --wp-code-bg: rgba(9, 12, 18, 0.56);
+    --wp-input-bg: rgba(12, 16, 24, 0.42);
+    --wp-switch-off: rgba(255, 255, 255, 0.14);
+    --wp-select-option-bg: #141923;
+    --wp-border: rgba(255, 255, 255, 0.09);
+    --wp-border-strong: rgba(255, 255, 255, 0.18);
+    --wp-text: #f5f7fa;
+    --wp-text-secondary: #e2e6ef;
+    --wp-text-muted: #bcc4d0;
+    --wp-text-subtle: #8e99aa;
+    --wp-scroll-track: #0b0e14;
+    --wp-scroll-thumb: rgba(255, 255, 255, 0.18);
+    --wp-scroll-thumb-hover: rgba(255, 255, 255, 0.30);
+
+    --wp-glass-sheen: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.07) 0%,
+      rgba(255, 255, 255, 0.01) 50%,
+      rgba(255, 255, 255, 0.035) 100%
+    );
+    --wp-glass-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.48);
+    --wp-glass-chrome-shadow: 0 8px 24px -12px rgba(0, 0, 0, 0.36);
+
+    --wp-accent: #3b82f6;
+    --wp-accent-hover: #2563eb;
+    --wp-accent-active: #1d4ed8;
+    --wp-accent-fg: #ffffff;
+    --wp-accent-rgb: 59, 130, 246;
+    --wp-accent-text: #60a5fa;
+    --wp-accent-soft: rgba(59, 130, 246, 0.18);
+    --wp-accent-border: rgba(59, 130, 246, 0.55);
+  }
+
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --wp-bg: #d9e4f2;
+    --wp-sidebar: rgba(255, 255, 255, 0.28);
+    --wp-header: rgba(255, 255, 255, 0.26);
+    --wp-surface: rgba(255, 255, 255, 0.26);
+    --wp-surface-alt: rgba(255, 255, 255, 0.18);
+    --wp-surface-hover: rgba(255, 255, 255, 0.44);
+    --wp-surface-active: rgba(255, 255, 255, 0.60);
+    --wp-code-bg: rgba(248, 250, 252, 0.46);
+    --wp-input-bg: rgba(255, 255, 255, 0.36);
+    --wp-switch-off: rgba(15, 23, 42, 0.18);
+    --wp-select-option-bg: #ffffff;
+    --wp-border: rgba(15, 23, 42, 0.08);
+    --wp-border-strong: rgba(15, 23, 42, 0.16);
+    --wp-text: #0f172a;
+    --wp-text-secondary: #1e293b;
+    --wp-text-muted: #334155;
+    --wp-text-subtle: #475569;
+    --wp-scroll-track: #d9e4f2;
+    --wp-scroll-thumb: rgba(15, 23, 42, 0.20);
+    --wp-scroll-thumb-hover: rgba(15, 23, 42, 0.34);
+
+    --wp-glass-sheen: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.16) 0%,
+      rgba(255, 255, 255, 0.02) 50%,
+      rgba(255, 255, 255, 0.08) 100%
+    );
+    --wp-glass-shadow: 0 10px 28px -14px rgba(15, 23, 42, 0.14);
+    --wp-glass-chrome-shadow: 0 8px 20px -12px rgba(15, 23, 42, 0.10);
+
+    --wp-accent: #3b82f6;
+    --wp-accent-hover: #2563eb;
+    --wp-accent-active: #1d4ed8;
+    --wp-accent-fg: #ffffff;
+    --wp-accent-rgb: 59, 130, 246;
+    --wp-accent-text: #2563eb;
+    --wp-accent-soft: rgba(59, 130, 246, 0.16);
+    --wp-accent-border: rgba(59, 130, 246, 0.45);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--wp-bg);
+    color: var(--wp-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 180ms ease, color 180ms ease;
+  }
+
+  select option {
+    background-color: var(--wp-select-option-bg);
+    color: var(--wp-text);
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+  }
+
+  code, pre, .font-mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.wp-glass {
+  backdrop-filter: blur(14px) saturate(155%);
+  -webkit-backdrop-filter: blur(14px) saturate(155%);
+  background-image: var(--wp-glass-sheen);
+  box-shadow: var(--wp-glass-shadow);
+}
+
+.wp-glass-chrome {
+  backdrop-filter: blur(18px) saturate(165%);
+  -webkit-backdrop-filter: blur(18px) saturate(165%);
+  background-image: var(--wp-glass-sheen);
+  box-shadow: var(--wp-glass-chrome-shadow);
+}
+
+.wp-btn-accent {
+  background-color: var(--wp-accent);
+  color: var(--wp-accent-fg);
+  box-shadow: 0 6px 18px -6px rgba(var(--wp-accent-rgb), 0.55);
+}
+.wp-btn-accent:hover:not(:disabled) {
+  background-color: var(--wp-accent-hover);
+}
+.wp-btn-accent:active:not(:disabled) {
+  background-color: var(--wp-accent-active);
+}
+
+.wp-accent-check {
+  accent-color: var(--wp-accent);
+}
+
+/* Custom subtle scrollbars matching current theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--wp-scroll-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--wp-scroll-thumb);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--wp-scroll-thumb-hover);
+}
