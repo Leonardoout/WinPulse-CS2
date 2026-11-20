@@ -58,11 +58,15 @@ export function ExecutionLogModal({
   const title = running
     ? actionType === 'restore'
       ? 'Criando Ponto de Restauração e Backup...'
-      : 'Aplicando Configurações Diretamente...'
+      : actionType === 'temp'
+        ? 'Executando Limpeza de Temporários...'
+        : 'Aplicando Configurações Diretamente...'
     : report?.ok
       ? actionType === 'restore'
         ? 'Backup e Ponto de Restauração Concluídos'
-        : 'Otimizações Aplicadas'
+        : actionType === 'temp'
+          ? 'Limpeza de Temporários Concluída'
+          : 'Otimizações Aplicadas'
       : 'Execução Finalizada com Avisos';
 
   const handleSaveLog = async () => {

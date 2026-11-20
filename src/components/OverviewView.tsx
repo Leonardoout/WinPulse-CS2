@@ -31,8 +31,9 @@ interface OverviewViewProps {
   onChangeBackupDestination: (path: string) => void;
   onPickBackupFolder: () => void;
   onCreateRestorePoint: () => void;
+  onRunTempCleanup: () => void;
   onApplyDirect: () => void;
-  runningAction: 'restore' | 'apply' | null;
+  runningAction: 'restore' | 'apply' | 'temp' | null;
   actionReport: ActionReport | null;
   onClearReport: () => void;
   onOpenLastLog: () => void;
@@ -56,6 +57,7 @@ export function OverviewView({
   onChangeBackupDestination,
   onPickBackupFolder,
   onCreateRestorePoint,
+  onRunTempCleanup,
   onApplyDirect,
   runningAction,
   actionReport,
@@ -165,13 +167,27 @@ export function OverviewView({
               type="button"
               onClick={onCreateRestorePoint}
               disabled={runningAction !== null}
-              className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-lg text-sm font-semibold border border-[var(--wp-border-strong)] bg-[var(--wp-surface-active)] hover:bg-[var(--wp-surface-hover)] text-[var(--wp-text)] transition-colors whitespace-nowrap disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--wp-accent)]"
+              className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-sm font-semibold border border-[var(--wp-border-strong)] bg-[var(--wp-surface-active)] hover:bg-[var(--wp-surface-hover)] text-[var(--wp-text)] transition-colors whitespace-nowrap disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--wp-accent)]"
             >
               <History className="h-4 w-4 text-[var(--wp-accent-text)]" aria-hidden="true" />
               <span>
                 {runningAction === 'restore'
                   ? 'Criando Ponto...'
                   : 'Criar Ponto de Restauração'}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={onRunTempCleanup}
+              disabled={runningAction !== null}
+              className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-sm font-semibold border border-[var(--wp-border-strong)] bg-[var(--wp-surface-active)] hover:bg-[var(--wp-surface-hover)] text-[var(--wp-text)] transition-colors whitespace-nowrap disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--wp-accent)]"
+            >
+              <Trash2 className="h-4 w-4 text-[var(--wp-accent-text)]" aria-hidden="true" />
+              <span>
+                {runningAction === 'temp'
+                  ? 'Limpando...'
+                  : 'Limpar Apenas Temporários'}
               </span>
             </button>
 

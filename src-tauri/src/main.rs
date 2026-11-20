@@ -158,6 +158,42 @@ fn start_apply_optimizations_cmd(
 }
 
 #[tauri::command]
+fn start_temp_cleanup_cmd(
+    enabled_tweaks: std::collections::HashMap<String, bool>,
+    exec_state: tauri::State<'_, AppExecutionState>,
+) -> Result<(), String> {
+    {
+        let mut guard = exec_state
+            .inner
+            .lock()
+            .map_err(|_| "Falha ao travar estado".to_string())?;
+        if guard.running {
+            return Err("Já existe uma execução em andamento.".to_string());
+        }
+        guard.running = true;
+        guard.action_type = "temp".to_string();
+        guard.logs.clear();
+        guard.report = None;
+    }
+
+    let shared = Arc::clone(&exec_state.inner);
+    std::thread::spawn(move || {
+        let report = optimizer::run_temp_cleanup_only(enabled_tweaks, |line| {
+            if let Ok(mut g) = shared.lock() {
+                g.logs.push(line);
+            }
+        });
+
+        if let Ok(mut guard) = shared.lock() {
+            guard.running = false;
+            guard.report = Some(report);
+        }
+    });
+
+    Ok(())
+}
+
+#[tauri::command]
 fn get_execution_status_cmd(
     exec_state: tauri::State<'_, AppExecutionState>,
 ) -> Result<ExecutionStatusSnapshot, String> {
@@ -192,6 +228,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             start_restore_point_cmd,
             start_apply_optimizations_cmd,
+            start_temp_cleanup_cmd,
             get_execution_status_cmd,
             pick_backup_folder_cmd,
             save_log_file_cmd

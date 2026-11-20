@@ -13,7 +13,7 @@ interface HeaderProps {
   subSections: SubSectionSelection;
   onOpenMobileMenu: () => void;
   onApplyDirect: () => void;
-  runningAction: 'restore' | 'apply' | null;
+  runningAction: 'restore' | 'apply' | 'temp' | null;
   appearance: AppearanceConfig;
   onToggleThemeMode: () => void;
   onSelectAccentColor: (color: AccentColorId) => void;

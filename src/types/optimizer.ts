@@ -106,8 +106,17 @@ export interface Cs2Config {
   viewmodelOffsetY: number;
   viewmodelOffsetZ: number;
 
-  // Cor do HUD (0..12)
+  // HUD Completo do CS2 (autoexec)
   hudColor: number;
+  hudScaling: number;
+  hudSafezoneX: number;
+  hudSafezoneY: number;
+  hudPlayerCountPos: 0 | 1;
+  hudPlayerCountShowCount: 0 | 1;
+  hudShowLoadout: boolean;
+  hudAllowAnimatedAvatars: boolean;
+  hudShowEquippedCharacterAvatars: boolean;
+  hudSanitizePlayerNames: boolean;
 
   // Mouse & Sensibilidade
   applySensitivityInAutoexec: boolean;

@@ -149,6 +149,53 @@ export function Cs2View({
     }
   };
 
+  const applyHudPreset = (mode: 'clean' | 'centered' | 'valve') => {
+    if (mode === 'clean') {
+      onChangeCs2Config({
+        ...cs2,
+        hudScaling: 0.90,
+        hudSafezoneX: 0.95,
+        hudSafezoneY: 1.0,
+        hudPlayerCountPos: 0,
+        hudPlayerCountShowCount: 1,
+        hudShowLoadout: true,
+        hudAllowAnimatedAvatars: false,
+        hudShowEquippedCharacterAvatars: false,
+        hudSanitizePlayerNames: false,
+        hideBuildInfo: true,
+      });
+    } else if (mode === 'centered') {
+      onChangeCs2Config({
+        ...cs2,
+        hudScaling: 0.85,
+        hudSafezoneX: 0.85,
+        hudSafezoneY: 0.95,
+        hudPlayerCountPos: 0,
+        hudPlayerCountShowCount: 1,
+        hudShowLoadout: true,
+        hudAllowAnimatedAvatars: false,
+        hudShowEquippedCharacterAvatars: false,
+        hudSanitizePlayerNames: false,
+        hideBuildInfo: true,
+      });
+    } else {
+      onChangeCs2Config({
+        ...cs2,
+        hudColor: 0,
+        hudScaling: 1.0,
+        hudSafezoneX: 1.0,
+        hudSafezoneY: 1.0,
+        hudPlayerCountPos: 0,
+        hudPlayerCountShowCount: 0,
+        hudShowLoadout: true,
+        hudAllowAnimatedAvatars: true,
+        hudShowEquippedCharacterAvatars: false,
+        hudSanitizePlayerNames: false,
+        hideBuildInfo: false,
+      });
+    }
+  };
+
   const handleCopyLaunch = async () => {
     await navigator.clipboard.writeText(launchString);
     setCopiedLaunch(true);
@@ -693,44 +740,309 @@ export function Cs2View({
             </div>
           </div>
 
-          {/* Cor do HUD, Sensibilidade & Bind para Falar */}
-          <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-5">
-            {/* Cor do HUD */}
-            <div className="space-y-2">
-              <label htmlFor="hud-color" className="block text-xs font-medium text-[var(--wp-text-secondary)]">
-                Cor do HUD (<span className="font-mono text-[var(--wp-accent-text)]">cl_hud_color</span>)
-              </label>
-              <div className="flex items-center gap-2.5">
-                <span
-                  className="h-5 w-5 rounded-full shrink-0 border border-black/25"
-                  title={
-                    cs2.hudColor === 0
-                      ? 'CT (Azul) / TR (Amarelo-Laranja)'
-                      : selectedHudColor.label
-                  }
-                  style={{
-                    background:
-                      cs2.hudColor === 0
-                        ? 'linear-gradient(135deg, #4B96EB 0%, #4B96EB 49%, #E5A038 51%, #E5A038 100%)'
-                        : selectedHudColor.swatch,
-                  }}
-                  aria-hidden="true"
-                />
-                <select
-                  id="hud-color"
-                  value={cs2.hudColor}
-                  onChange={(e) => update('hudColor', Number(e.target.value))}
-                  className="w-full h-10 px-3 rounded-lg bg-[var(--wp-input-bg)] border border-[var(--wp-border)] font-mono text-xs text-[var(--wp-text)] focus:outline-none focus:border-[var(--wp-accent)]"
+          {/* Ajuste Completo do HUD do CS2 */}
+          <div className="p-5 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-[var(--wp-text)]">
+                  Ajuste Completo do HUD
+                </h3>
+                <p className="text-xs text-[var(--wp-text-muted)]">
+                  Personalize cor, escala geral (<span className="font-mono text-[var(--wp-accent-text)]">hud_scaling</span>), margens da tela (<span className="font-mono text-[var(--wp-accent-text)]">safezonex/y</span>), contador de vivos, inventário e avatares.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => applyHudPreset('clean')}
+                  className="px-2.5 py-1 rounded-md text-xs font-medium border border-[var(--wp-border)] bg-[var(--wp-surface-alt)] hover:bg-[var(--wp-surface-hover)] text-[var(--wp-text-secondary)] transition-colors"
                 >
-                  {HUD_COLORS.map((color) => (
-                    <option key={color.value} value={color.value}>
-                      {color.label}
-                    </option>
-                  ))}
+                  Competitivo Limpo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyHudPreset('centered')}
+                  className="px-2.5 py-1 rounded-md text-xs font-medium border border-[var(--wp-border)] bg-[var(--wp-surface-alt)] hover:bg-[var(--wp-surface-hover)] text-[var(--wp-text-secondary)] transition-colors"
+                >
+                  Centralizado (Tela Grande)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyHudPreset('valve')}
+                  className="px-2.5 py-1 rounded-md text-xs font-medium border border-[var(--wp-border)] bg-[var(--wp-surface-alt)] hover:bg-[var(--wp-surface-hover)] text-[var(--wp-text-secondary)] transition-colors"
+                >
+                  Padrão Valve
+                </button>
+              </div>
+            </div>
+
+            {/* Sliders + Cor do HUD */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+              {/* Cor do HUD */}
+              <div className="space-y-1.5">
+                <label htmlFor="hud-color" className="block text-xs font-medium text-[var(--wp-text-secondary)]">
+                  Cor do HUD (<span className="font-mono text-[var(--wp-accent-text)]">cl_hud_color</span>)
+                </label>
+                <div className="flex items-center gap-2.5">
+                  <span
+                    className="h-5 w-5 rounded-full shrink-0 border border-black/25"
+                    title={
+                      cs2.hudColor === 0
+                        ? 'CT (Azul) / TR (Amarelo-Laranja)'
+                        : selectedHudColor.label
+                    }
+                    style={{
+                      background:
+                        cs2.hudColor === 0
+                          ? 'linear-gradient(135deg, #4B96EB 0%, #4B96EB 49%, #E5A038 51%, #E5A038 100%)'
+                          : selectedHudColor.swatch,
+                    }}
+                    aria-hidden="true"
+                  />
+                  <select
+                    id="hud-color"
+                    value={cs2.hudColor}
+                    onChange={(e) => update('hudColor', Number(e.target.value))}
+                    className="w-full h-9 px-2.5 rounded-lg bg-[var(--wp-input-bg)] border border-[var(--wp-border)] font-mono text-xs text-[var(--wp-text)] focus:outline-none focus:border-[var(--wp-accent)]"
+                  >
+                    {HUD_COLORS.map((color) => (
+                      <option key={color.value} value={color.value}>
+                        {color.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Escala Geral do HUD */}
+              <div className="space-y-1.5">
+                <label htmlFor="hud-scaling" className="block text-xs font-medium text-[var(--wp-text-secondary)]">
+                  Escala do HUD (<span className="font-mono text-[var(--wp-accent-text)]">hud_scaling</span>):{' '}
+                  <span className="font-mono text-[var(--wp-text)]">{cs2.hudScaling.toFixed(2)}</span>
+                </label>
+                <input
+                  id="hud-scaling"
+                  type="range"
+                  min={0.5}
+                  max={1.1}
+                  step={0.05}
+                  value={cs2.hudScaling}
+                  onChange={(e) => update('hudScaling', Number(e.target.value))}
+                  className="wp-accent-check w-full h-9 cursor-pointer"
+                />
+              </div>
+
+              {/* Margem Horizontal safezonex */}
+              <div className="space-y-1.5">
+                <label htmlFor="hud-safezonex" className="block text-xs font-medium text-[var(--wp-text-secondary)]">
+                  Margem Horizontal (<span className="font-mono text-[var(--wp-accent-text)]">safezonex</span>):{' '}
+                  <span className="font-mono text-[var(--wp-text)]">{cs2.hudSafezoneX.toFixed(2)}</span>
+                </label>
+                <input
+                  id="hud-safezonex"
+                  type="range"
+                  min={0.5}
+                  max={1.0}
+                  step={0.01}
+                  value={cs2.hudSafezoneX}
+                  onChange={(e) => update('hudSafezoneX', Number(e.target.value))}
+                  className="wp-accent-check w-full h-9 cursor-pointer"
+                />
+              </div>
+
+              {/* Margem Vertical safezoney */}
+              <div className="space-y-1.5">
+                <label htmlFor="hud-safezoney" className="block text-xs font-medium text-[var(--wp-text-secondary)]">
+                  Margem Vertical (<span className="font-mono text-[var(--wp-accent-text)]">safezoney</span>):{' '}
+                  <span className="font-mono text-[var(--wp-text)]">{cs2.hudSafezoneY.toFixed(2)}</span>
+                </label>
+                <input
+                  id="hud-safezoney"
+                  type="range"
+                  min={0.85}
+                  max={1.0}
+                  step={0.01}
+                  value={cs2.hudSafezoneY}
+                  onChange={(e) => update('hudSafezoneY', Number(e.target.value))}
+                  className="wp-accent-check w-full h-9 cursor-pointer"
+                />
+              </div>
+            </div>
+
+            {/* Selects do Placar de Vivos & Telemetria HUD */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+              <div className="space-y-1.5">
+                <label htmlFor="hud-pc-pos" className="block text-xs font-medium text-[var(--wp-text-secondary)]">
+                  Posição dos Jogadores (<span className="font-mono text-[var(--wp-accent-text)]">playercount_pos</span>)
+                </label>
+                <select
+                  id="hud-pc-pos"
+                  value={cs2.hudPlayerCountPos}
+                  onChange={(e) => update('hudPlayerCountPos', Number(e.target.value) as 0 | 1)}
+                  className="w-full h-9 px-2.5 rounded-lg bg-[var(--wp-input-bg)] border border-[var(--wp-border)] font-mono text-xs text-[var(--wp-text)] focus:outline-none focus:border-[var(--wp-accent)]"
+                >
+                  <option value={0}>0 — Topo da Tela (Padrão)</option>
+                  <option value={1}>1 — Parte Inferior</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="hud-pc-showcount" className="block text-xs font-medium text-[var(--wp-text-secondary)]">
+                  Estilo de Vivos (<span className="font-mono text-[var(--wp-accent-text)]">showcount</span>)
+                </label>
+                <select
+                  id="hud-pc-showcount"
+                  value={cs2.hudPlayerCountShowCount}
+                  onChange={(e) => update('hudPlayerCountShowCount', Number(e.target.value) as 0 | 1)}
+                  className="w-full h-9 px-2.5 rounded-lg bg-[var(--wp-input-bg)] border border-[var(--wp-border)] font-mono text-xs text-[var(--wp-text)] focus:outline-none focus:border-[var(--wp-accent)]"
+                >
+                  <option value={0}>0 — Avatares Individuais</option>
+                  <option value={1}>1 — Apenas Número de Vivos</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="telemetry-ping" className="block text-xs font-medium text-[var(--wp-text-secondary)]">
+                  Telemetria de Ping (<span className="font-mono text-[var(--wp-accent-text)]">ping_show</span>)
+                </label>
+                <select
+                  id="telemetry-ping"
+                  value={cs2.telemetryPing}
+                  onChange={(e) => update('telemetryPing', e.target.value as '0' | '1' | '2')}
+                  className="w-full h-9 px-2.5 rounded-lg bg-[var(--wp-input-bg)] border border-[var(--wp-border)] font-mono text-xs text-[var(--wp-text)] focus:outline-none focus:border-[var(--wp-accent)]"
+                >
+                  <option value="2">2 — Mostrar sempre</option>
+                  <option value="1">1 — Apenas se ping alto</option>
+                  <option value="0">0 — Oculto</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="telemetry-loss" className="block text-xs font-medium text-[var(--wp-text-secondary)]">
+                  Perda de Pacotes (<span className="font-mono text-[var(--wp-accent-text)]">net_misdelivery</span>)
+                </label>
+                <select
+                  id="telemetry-loss"
+                  value={cs2.telemetryPacketLoss}
+                  onChange={(e) => update('telemetryPacketLoss', e.target.value as '0' | '1' | '2')}
+                  className="w-full h-9 px-2.5 rounded-lg bg-[var(--wp-input-bg)] border border-[var(--wp-border)] font-mono text-xs text-[var(--wp-text)] focus:outline-none focus:border-[var(--wp-accent)]"
+                >
+                  <option value="2">2 — Mostrar sempre</option>
+                  <option value="1">1 — Apenas se houver perda</option>
+                  <option value="0">0 — Oculto</option>
                 </select>
               </div>
             </div>
 
+            {/* Checkboxes de comportamento do HUD */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-1">
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={cs2.hudShowLoadout}
+                  onChange={(e) => update('hudShowLoadout', e.target.checked)}
+                  className="wp-accent-check mt-0.5 h-4 w-4 rounded"
+                />
+                <div>
+                  <div className="text-xs font-medium text-[var(--wp-text)]">
+                    Inventário Sempre Visível (<span className="font-mono text-[var(--wp-accent-text)]">cl_showloadout</span>)
+                  </div>
+                  <div className="text-[11px] text-[var(--wp-text-muted)]">
+                    Mantém armas e granadas sempre fixas no canto inferior direito.
+                  </div>
+                </div>
+              </label>
+
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={cs2.hideBuildInfo}
+                  onChange={(e) => update('hideBuildInfo', e.target.checked)}
+                  className="wp-accent-check mt-0.5 h-4 w-4 rounded"
+                />
+                <div>
+                  <div className="text-xs font-medium text-[var(--wp-text)]">
+                    Ocultar Versão da Build (<span className="font-mono text-[var(--wp-accent-text)]">r_show_build_info false</span>)
+                  </div>
+                  <div className="text-[11px] text-[var(--wp-text-muted)]">
+                    Remove o texto técnico no canto inferior esquerdo da tela.
+                  </div>
+                </div>
+              </label>
+
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!cs2.useOpensBuyMenu}
+                  onChange={(e) => update('useOpensBuyMenu', !e.target.checked)}
+                  className="wp-accent-check mt-0.5 h-4 w-4 rounded"
+                />
+                <div>
+                  <div className="text-xs font-medium text-[var(--wp-text)]">
+                    Bloquear Compra com E (<span className="font-mono text-[var(--wp-accent-text)]">cl_use_opens_buy_menu</span>)
+                  </div>
+                  <div className="text-[11px] text-[var(--wp-text-muted)]">
+                    Evita abrir a loja por engano ao pegar armas dropadas na base.
+                  </div>
+                </div>
+              </label>
+
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={cs2.hudAllowAnimatedAvatars}
+                  onChange={(e) => update('hudAllowAnimatedAvatars', e.target.checked)}
+                  className="wp-accent-check mt-0.5 h-4 w-4 rounded"
+                />
+                <div>
+                  <div className="text-xs font-medium text-[var(--wp-text)]">
+                    Avatares Animados Steam (<span className="font-mono text-[var(--wp-accent-text)]">cl_allow_animated_avatars</span>)
+                  </div>
+                  <div className="text-[11px] text-[var(--wp-text-muted)]">
+                    Desative para evitar distrações e economizar ciclos de UI.
+                  </div>
+                </div>
+              </label>
+
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={cs2.hudShowEquippedCharacterAvatars}
+                  onChange={(e) => update('hudShowEquippedCharacterAvatars', e.target.checked)}
+                  className="wp-accent-check mt-0.5 h-4 w-4 rounded"
+                />
+                <div>
+                  <div className="text-xs font-medium text-[var(--wp-text)]">
+                    Agente como Avatar (<span className="font-mono text-[var(--wp-accent-text)]">equipped_character</span>)
+                  </div>
+                  <div className="text-[11px] text-[var(--wp-text-muted)]">
+                    Exibe a skin de agente equipada no lugar da foto da Steam.
+                  </div>
+                </div>
+              </label>
+
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={cs2.hudSanitizePlayerNames}
+                  onChange={(e) => update('hudSanitizePlayerNames', e.target.checked)}
+                  className="wp-accent-check mt-0.5 h-4 w-4 rounded"
+                />
+                <div>
+                  <div className="text-xs font-medium text-[var(--wp-text)]">
+                    Filtrar Nomes no HUD (<span className="font-mono text-[var(--wp-accent-text)]">cl_sanitize_player_names</span>)
+                  </div>
+                  <div className="text-[11px] text-[var(--wp-text-muted)]">
+                    Oculta nomes impróprios no placar e no killfeed.
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {/* Sensibilidade & Bind para Falar */}
+          <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Sensibilidade */}
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-xs font-medium text-[var(--wp-text-secondary)] cursor-pointer">
@@ -1188,40 +1500,6 @@ export function Cs2View({
                   </div>
                   <div className="text-xs text-[var(--wp-text-muted)]">
                     Melhora precisão direcional de passos na vertical (ex: Nuke e Vertigo).
-                  </div>
-                </div>
-              </label>
-
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={cs2.hideBuildInfo}
-                  onChange={(e) => update('hideBuildInfo', e.target.checked)}
-                  className="wp-accent-check mt-1 h-4 w-4 rounded"
-                />
-                <div>
-                  <div className="text-sm font-medium text-[var(--wp-text)]">
-                    Ocultar marca d&apos;água de build (<span className="font-mono text-[var(--wp-accent-text)]">r_show_build_info false</span>)
-                  </div>
-                  <div className="text-xs text-[var(--wp-text-muted)]">
-                    Remove o texto técnico da versão no canto inferior esquerdo da tela.
-                  </div>
-                </div>
-              </label>
-
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={!cs2.useOpensBuyMenu}
-                  onChange={(e) => update('useOpensBuyMenu', !e.target.checked)}
-                  className="wp-accent-check mt-1 h-4 w-4 rounded"
-                />
-                <div>
-                  <div className="text-sm font-medium text-[var(--wp-text)]">
-                    Impedir tecla E de abrir menu de compras
-                  </div>
-                  <div className="text-xs text-[var(--wp-text-muted)]">
-                    Evita abrir a loja por acidente ao tentar pegar armas dropadas no spawn.
                   </div>
                 </div>
               </label>

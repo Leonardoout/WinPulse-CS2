@@ -14,7 +14,7 @@ export interface ActionReport {
 
 export interface LiveExecutionSnapshot {
   running: boolean;
-  actionType: 'restore' | 'apply';
+  actionType: 'restore' | 'apply' | 'temp';
   logs: string[];
   report: ActionReport | null;
 }
@@ -82,7 +82,7 @@ function delay(ms: number): Promise<void> {
 }
 
 async function pollNativeExecution(
-  actionType: 'restore' | 'apply',
+  actionType: 'restore' | 'apply' | 'temp',
   onUpdate: (snapshot: LiveExecutionSnapshot) => void
 ): Promise<ActionReport> {
   while (true) {
@@ -260,6 +260,87 @@ export async function executeApplyDirectLive(
   onUpdate({
     running: false,
     actionType: 'apply',
+    logs,
+    report,
+  });
+
+  return report;
+}
+
+export async function executeTempCleanupLive(
+  state: OptimizerState,
+  onUpdate: (snapshot: LiveExecutionSnapshot) => void
+): Promise<ActionReport> {
+  if (isRunningInDesktopApp()) {
+    onUpdate({
+      running: true,
+      actionType: 'temp',
+      logs: ['[INICIO] Iniciando limpeza exclusiva de arquivos temporários...'],
+      report: null,
+    });
+
+    await window.__TAURI_INTERNALS__!.invoke('start_temp_cleanup_cmd', {
+      enabledTweaks: state.enabledTweaks,
+    });
+
+    return pollNativeExecution('temp', onUpdate);
+  }
+
+  const tempItems = TWEAKS_CATALOG.filter(
+    (t) => t.category === 'temp' && state.enabledTweaks[t.id]
+  );
+
+  if (tempItems.length === 0) {
+    const logs = [
+      '[PRÉVIA WEB] Nenhum alvo de limpeza temporária está marcado na aba Temporários.',
+    ];
+    const report: ActionReport = {
+      ok: true,
+      summary: 'Nenhum alvo de limpeza temporária estava marcado.',
+      freedMb: 0,
+      requiresReboot: false,
+      logs,
+      mode: 'web-preview',
+    };
+    onUpdate({
+      running: false,
+      actionType: 'temp',
+      logs,
+      report,
+    });
+    return report;
+  }
+
+  const steps = [
+    `[PRÉVIA WEB] Executando apenas limpeza de temporários (${tempItems.length} alvos selecionados).`,
+    ...tempItems.map((item) => `[OK] ${item.title} -> ${item.previewCommand}`),
+    '[CONCLUIDO] Limpeza exclusiva de temporários pronta para rodar no WinPulse-CS2.exe.',
+  ];
+
+  const logs: string[] = [];
+  for (const step of steps) {
+    logs.push(step);
+    onUpdate({
+      running: true,
+      actionType: 'temp',
+      logs: [...logs],
+      report: null,
+    });
+    await delay(90);
+  }
+
+  const report: ActionReport = {
+    ok: true,
+    summary: `Prévia da limpeza de temporários concluída (${tempItems.length} alvos prontos).`,
+    freedMb: 0,
+    requiresReboot: false,
+    logs,
+    mode: 'web-preview',
+  };
+
+  onUpdate({
+    running: false,
+    actionType: 'temp',
     logs,
     report,
   });

@@ -22,7 +22,7 @@ interface ExportViewProps {
   onChangeBackupDestination: (path: string) => void;
   onPickBackupFolder: () => void;
   onApplyDirect: () => void;
-  runningAction: 'restore' | 'apply' | null;
+  runningAction: 'restore' | 'apply' | 'temp' | null;
   isDesktopNative: boolean;
 }
 

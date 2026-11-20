@@ -68,6 +68,188 @@ fn dir_size(dir: &Path) -> u64 {
     total
 }
 
+fn run_temp_cleanup_steps<F>(
+    enabled_tweaks: &std::collections::HashMap<String, bool>,
+    log: &mut F,
+) -> (u64, usize)
+where
+    F: FnMut(String),
+{
+    let has = |id: &str| *enabled_tweaks.get(id).unwrap_or(&false);
+    let mut freed_bytes: u64 = 0;
+    let mut executed_count: usize = 0;
+
+    let local_appdata = std::env::var("LOCALAPPDATA").unwrap_or_default();
+    let system_root = std::env::var("SystemRoot").unwrap_or_else(|_| "C:\\Windows".to_string());
+
+    if has("temp_user") {
+        executed_count += 1;
+        log("[ETAPA] Limpando pasta %TEMP% do usuário...".to_string());
+        let p = std::env::temp_dir();
+        let bytes = clean_directory_contents(&p);
+        freed_bytes += bytes;
+        log(format!(
+            "[OK] %TEMP% limpa ({:.1} MB liberados).",
+            bytes as f64 / 1_048_576.0
+        ));
+    }
+
+    if has("temp_windows") {
+        executed_count += 1;
+        log("[ETAPA] Limpando pasta Windows\\Temp...".to_string());
+        let p = PathBuf::from(&system_root).join("Temp");
+        let bytes = clean_directory_contents(&p);
+        freed_bytes += bytes;
+        log(format!(
+            "[OK] Windows\\Temp limpa ({:.1} MB).",
+            bytes as f64 / 1_048_576.0
+        ));
+    }
+
+    if has("temp_prefetch") {
+        executed_count += 1;
+        log("[ETAPA] Limpando Prefetch...".to_string());
+        let p = PathBuf::from(&system_root).join("Prefetch");
+        let bytes = clean_directory_contents(&p);
+        freed_bytes += bytes;
+        log(format!(
+            "[OK] Prefetch limpo ({:.1} MB).",
+            bytes as f64 / 1_048_576.0
+        ));
+    }
+
+    if has("temp_dx_cache") && !local_appdata.is_empty() {
+        executed_count += 1;
+        log("[ETAPA] Limpando DirectX Shader Cache (D3DSCache)...".to_string());
+        let p = PathBuf::from(&local_appdata).join("D3DSCache");
+        let bytes = clean_directory_contents(&p);
+        freed_bytes += bytes;
+        log(format!(
+            "[OK] DirectX Shader Cache (D3DSCache) limpo ({:.1} MB).",
+            bytes as f64 / 1_048_576.0
+        ));
+    }
+
+    if has("temp_gpu_cache") && !local_appdata.is_empty() {
+        executed_count += 1;
+        log("[ETAPA] Limpando caches de shader NVIDIA e AMD...".to_string());
+        let gpu_dirs = [
+            "NVIDIA\\DXCache",
+            "NVIDIA\\GLCache",
+            "AMD\\DxCache",
+            "AMD\\GLCache",
+            "AMD\\VkCache",
+        ];
+        let mut gpu_bytes = 0u64;
+        for sub in gpu_dirs {
+            gpu_bytes += clean_directory_contents(&PathBuf::from(&local_appdata).join(sub));
+        }
+        freed_bytes += gpu_bytes;
+        log(format!(
+            "[OK] Caches de shader NVIDIA/AMD limpos ({:.1} MB).",
+            gpu_bytes as f64 / 1_048_576.0
+        ));
+    }
+
+    if has("temp_wu_cache") {
+        executed_count += 1;
+        log("[ETAPA] Limpando cache de downloads do Windows Update...".to_string());
+        let _ = run_cmd("net", &["stop", "wuauserv"]);
+        let p = PathBuf::from(&system_root).join("SoftwareDistribution\\Download");
+        let bytes = clean_directory_contents(&p);
+        freed_bytes += bytes;
+        let _ = run_cmd("net", &["start", "wuauserv"]);
+        log(format!(
+            "[OK] Cache de downloads do Windows Update limpo ({:.1} MB).",
+            bytes as f64 / 1_048_576.0
+        ));
+    }
+
+    if has("temp_delivery_opt") {
+        executed_count += 1;
+        log("[ETAPA] Limpando Delivery Optimization Cache...".to_string());
+        let _ = run_cmd(
+            "powershell.exe",
+            &[
+                "-NoProfile",
+                "-Command",
+                "Delete-DeliveryOptimizationCache -Force -ErrorAction SilentlyContinue",
+            ],
+        );
+        log("[OK] Cache Delivery Optimization limpo.".to_string());
+    }
+
+    if has("temp_dns_flush") {
+        executed_count += 1;
+        log("[ETAPA] Executando ipconfig /flushdns...".to_string());
+        let _ = run_cmd("ipconfig", &["/flushdns"]);
+        log("[OK] Cache DNS limpo (ipconfig /flushdns).".to_string());
+    }
+
+    if has("temp_recycle_bin") {
+        executed_count += 1;
+        log("[ETAPA] Esvaziando Lixeira...".to_string());
+        let _ = run_cmd(
+            "powershell.exe",
+            &[
+                "-NoProfile",
+                "-Command",
+                "Clear-RecycleBin -Force -ErrorAction SilentlyContinue",
+            ],
+        );
+        log("[OK] Lixeira esvaziada.".to_string());
+    }
+
+    (freed_bytes, executed_count)
+}
+
+pub fn run_temp_cleanup_only<F>(
+    enabled_tweaks: std::collections::HashMap<String, bool>,
+    mut emit_log: F,
+) -> ActionReport
+where
+    F: FnMut(String),
+{
+    let mut all_logs = Vec::new();
+    let mut log = |msg: String| {
+        all_logs.push(msg.clone());
+        emit_log(msg);
+    };
+
+    log("[INICIO] Executando apenas a limpeza de arquivos temporários e caches...".to_string());
+    let (freed_bytes, executed_count) = run_temp_cleanup_steps(&enabled_tweaks, &mut log);
+    let freed_mb = freed_bytes as f64 / 1_048_576.0;
+
+    if executed_count == 0 {
+        log("[AVISO] Nenhum item de limpeza de temporários estava selecionado.".to_string());
+        return ActionReport {
+            ok: true,
+            summary: "Nenhum alvo de limpeza temporária estava marcado.".to_string(),
+            backup_path: None,
+            freed_mb: 0.0,
+            requires_reboot: false,
+            logs: all_logs,
+        };
+    }
+
+    log(format!(
+        "[CONCLUIDO] Limpeza de temporários finalizada ({} etapas, {:.1} MB liberados).",
+        executed_count, freed_mb
+    ));
+
+    ActionReport {
+        ok: true,
+        summary: format!(
+            "Limpeza de temporários concluída ({:.1} MB liberados).",
+            freed_mb
+        ),
+        backup_path: None,
+        freed_mb,
+        requires_reboot: false,
+        logs: all_logs,
+    }
+}
+
 pub fn apply_optimizations_direct<F>(payload: &OptimizerPayload, mut emit_log: F) -> ActionReport
 where
     F: FnMut(String),
@@ -79,7 +261,6 @@ where
     };
 
     let mut backup_path: Option<String> = None;
-    let mut freed_bytes: u64 = 0;
     let mut requires_reboot = false;
 
     log(format!(
@@ -105,104 +286,7 @@ where
     }
 
     // 2. Limpeza de Arquivos Temporários
-    let local_appdata = std::env::var("LOCALAPPDATA").unwrap_or_default();
-    let system_root = std::env::var("SystemRoot").unwrap_or_else(|_| "C:\\Windows".to_string());
-
-    if is_enabled(payload, "temp_user") {
-        log("[ETAPA] Limpando pasta %TEMP% do usuário...".to_string());
-        let p = std::env::temp_dir();
-        let bytes = clean_directory_contents(&p);
-        freed_bytes += bytes;
-        log(format!(
-            "[OK] %TEMP% limpa ({:.1} MB liberados).",
-            bytes as f64 / 1_048_576.0
-        ));
-    }
-
-    if is_enabled(payload, "temp_windows") {
-        log("[ETAPA] Limpando pasta Windows\\Temp...".to_string());
-        let p = PathBuf::from(&system_root).join("Temp");
-        let bytes = clean_directory_contents(&p);
-        freed_bytes += bytes;
-        log(format!(
-            "[OK] Windows\\Temp limpa ({:.1} MB).",
-            bytes as f64 / 1_048_576.0
-        ));
-    }
-
-    if is_enabled(payload, "temp_prefetch") {
-        log("[ETAPA] Limpando Prefetch...".to_string());
-        let p = PathBuf::from(&system_root).join("Prefetch");
-        let bytes = clean_directory_contents(&p);
-        freed_bytes += bytes;
-        log(format!(
-            "[OK] Prefetch limpo ({:.1} MB).",
-            bytes as f64 / 1_048_576.0
-        ));
-    }
-
-    if is_enabled(payload, "temp_dx_cache") && !local_appdata.is_empty() {
-        log("[ETAPA] Limpando DirectX Shader Cache (D3DSCache)...".to_string());
-        let p = PathBuf::from(&local_appdata).join("D3DSCache");
-        freed_bytes += clean_directory_contents(&p);
-        log("[OK] DirectX Shader Cache (D3DSCache) limpo.".to_string());
-    }
-
-    if is_enabled(payload, "temp_gpu_cache") && !local_appdata.is_empty() {
-        log("[ETAPA] Limpando caches de shader NVIDIA e AMD...".to_string());
-        let gpu_dirs = [
-            "NVIDIA\\DXCache",
-            "NVIDIA\\GLCache",
-            "AMD\\DxCache",
-            "AMD\\GLCache",
-            "AMD\\VkCache",
-        ];
-        for sub in gpu_dirs {
-            freed_bytes += clean_directory_contents(&PathBuf::from(&local_appdata).join(sub));
-        }
-        log("[OK] Caches de shader NVIDIA/AMD limpos.".to_string());
-    }
-
-    if is_enabled(payload, "temp_wu_cache") {
-        log("[ETAPA] Limpando cache de downloads do Windows Update...".to_string());
-        let _ = run_cmd("net", &["stop", "wuauserv"]);
-        let p = PathBuf::from(&system_root).join("SoftwareDistribution\\Download");
-        freed_bytes += clean_directory_contents(&p);
-        let _ = run_cmd("net", &["start", "wuauserv"]);
-        log("[OK] Cache de downloads do Windows Update limpo.".to_string());
-    }
-
-    if is_enabled(payload, "temp_delivery_opt") {
-        log("[ETAPA] Limpando Delivery Optimization Cache...".to_string());
-        let _ = run_cmd(
-            "powershell.exe",
-            &[
-                "-NoProfile",
-                "-Command",
-                "Delete-DeliveryOptimizationCache -Force -ErrorAction SilentlyContinue",
-            ],
-        );
-        log("[OK] Cache Delivery Optimization limpo.".to_string());
-    }
-
-    if is_enabled(payload, "temp_dns_flush") {
-        log("[ETAPA] Executando ipconfig /flushdns...".to_string());
-        let _ = run_cmd("ipconfig", &["/flushdns"]);
-        log("[OK] Cache DNS limpo (ipconfig /flushdns).".to_string());
-    }
-
-    if is_enabled(payload, "temp_recycle_bin") {
-        log("[ETAPA] Esvaziando Lixeira...".to_string());
-        let _ = run_cmd(
-            "powershell.exe",
-            &[
-                "-NoProfile",
-                "-Command",
-                "Clear-RecycleBin -Force -ErrorAction SilentlyContinue",
-            ],
-        );
-        log("[OK] Lixeira esvaziada.".to_string());
-    }
+    let (freed_bytes, _) = run_temp_cleanup_steps(&payload.enabled_tweaks, &mut log);
 
     // 3. Plano de Energia (powercfg)
     log("[ETAPA] Configurando Plano de Energia via powercfg...".to_string());

@@ -1,4 +1,4 @@
-import { Search, X } from 'lucide-react';
+import { Search, Trash2, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { TWEAKS_CATALOG } from '../data/tweaks';
 import { RiskLevel, TweakCategory, TweakItem } from '../types/optimizer';
@@ -12,6 +12,8 @@ interface TweakListViewProps {
   onToggleTweak: (id: string) => void;
   onSetCategoryEnabled: (categories: TweakCategory[], enabled: boolean) => void;
   subgroupFilter?: string;
+  onRunTempCleanup?: () => void;
+  runningAction?: 'restore' | 'apply' | 'temp' | null;
 }
 
 type RiskFilter = 'all' | RiskLevel;
@@ -24,6 +26,8 @@ export function TweakListView({
   onToggleTweak,
   onSetCategoryEnabled,
   subgroupFilter = 'all',
+  onRunTempCleanup,
+  runningAction = null,
 }: TweakListViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [riskFilter, setRiskFilter] = useState<RiskFilter>('all');
@@ -83,7 +87,22 @@ export function TweakListView({
           <p className="text-sm text-[var(--wp-text-muted)] leading-relaxed">{description}</p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          {onRunTempCleanup && (
+            <button
+              type="button"
+              onClick={onRunTempCleanup}
+              disabled={runningAction !== null}
+              className="wp-btn-accent inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap disabled:opacity-60"
+            >
+              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>
+                {runningAction === 'temp'
+                  ? 'Limpando Temporários...'
+                  : 'Executar Apenas Limpeza de Temporários'}
+              </span>
+            </button>
+          )}
           <button
             type="button"
             onClick={() => onSetCategoryEnabled(categories, true)}

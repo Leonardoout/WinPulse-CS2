@@ -30,6 +30,7 @@ import {
   ActionReport,
   executeApplyDirectLive,
   executeRestorePointLive,
+  executeTempCleanupLive,
   isRunningInDesktopApp,
   LiveExecutionSnapshot,
   pickBackupFolder,
@@ -133,7 +134,7 @@ export default function App() {
     windows: 'all',
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [runningAction, setRunningAction] = useState<'restore' | 'apply' | null>(null);
+  const [runningAction, setRunningAction] = useState<'restore' | 'apply' | 'temp' | null>(null);
   const [actionReport, setActionReport] = useState<ActionReport | null>(null);
   const [liveExecution, setLiveExecution] = useState<LiveExecutionSnapshot | null>(null);
   const [logModalOpen, setLogModalOpen] = useState(false);
@@ -311,6 +312,37 @@ export default function App() {
     }
   };
 
+  const handleRunTempCleanup = async () => {
+    if (runningAction) return;
+    setRunningAction('temp');
+    setLogModalOpen(true);
+    try {
+      const report = await executeTempCleanupLive(state, (snapshot) =>
+        setLiveExecution(snapshot)
+      );
+      setActionReport(report);
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      const failReport: ActionReport = {
+        ok: false,
+        summary: `Erro ao limpar temporários: ${errorMsg}`,
+        freedMb: 0,
+        requiresReboot: false,
+        logs: [`[ERRO] ${errorMsg}`],
+        mode: isDesktopNative ? 'desktop-native' : 'web-preview',
+      };
+      setLiveExecution({
+        running: false,
+        actionType: 'temp',
+        logs: failReport.logs,
+        report: failReport,
+      });
+      setActionReport(failReport);
+    } finally {
+      setRunningAction(null);
+    }
+  };
+
   const handleApplyDirect = () => {
     if (runningAction) return;
     setApplyPromptOpen(true);
@@ -407,6 +439,7 @@ export default function App() {
                 onChangeBackupDestination={handleChangeBackupDestination}
                 onPickBackupFolder={handlePickBackupFolder}
                 onCreateRestorePoint={handleCreateRestorePoint}
+                onRunTempCleanup={handleRunTempCleanup}
                 onApplyDirect={handleApplyDirect}
                 runningAction={runningAction}
                 actionReport={actionReport}
@@ -425,6 +458,8 @@ export default function App() {
                 onToggleTweak={handleToggleTweak}
                 onSetCategoryEnabled={handleSetCategoryEnabled}
                 subgroupFilter={subSections.temp}
+                onRunTempCleanup={handleRunTempCleanup}
+                runningAction={runningAction}
               />
             )}
 
